@@ -1,0 +1,62 @@
+[
+  {
+    "note_id": "N001",
+    "note_text": "Patient John Smith, DOB 03/15/1965, MRN 789234. Chief complaint: chest pain radiating to left arm for 2 hours. Vital signs: BP 158/94, HR 102, O2 sat 96%. EKG shows ST-elevation in leads II, III, aVF. Assessment: Acute myocardial infarction (ICD-10: I21.9). Medications: Aspirin 325mg PO stat, Metoprolol 25mg PO BID, Atorvastatin 40mg PO QHS, Lisinopril 10mg PO daily. Follow-up with cardiology in 1 week. Contact: 555-234-8901, 123 Maple Street, Dayton OH 45401.",
+    "note_type": "discharge_summary",
+    "department": "Cardiology"
+  },
+  {
+    "note_id": "N002",
+    "note_text": "Patient Maria Gonzalez, DOB 07/22/1978, MRN 456812. Email: mgonzalez@email.com. Presenting with polyuria, polydipsia, fatigue for 3 weeks. Lab: HbA1c 9.2%, fasting glucose 287 mg/dL. Assessment: Type 2 diabetes mellitus uncontrolled (ICD-10: E11.65). Medications started: Metformin 1000mg PO BID with meals, Empagliflozin 10mg PO daily. Referral to diabetes education program. Phone: 937-555-0192.",
+    "note_type": "outpatient_visit",
+    "department": "Endocrinology"
+  },
+  {
+    "note_id": "N003",
+    "note_text": "Patient Robert Chen, DOB 11/08/1952, MRN 334521. SSN: 123-45-6789. BP consistently elevated over 6 months. Readings today: 172/106, 168/102. Lab: BMP within normal limits, UA negative for protein. Assessment: Essential hypertension, stage 2 (ICD-10: I10). Medications: Amlodipine 10mg PO daily, Hydrochlorothiazide 25mg PO daily, Losartan 100mg PO daily. Return to clinic in 4 weeks.",
+    "note_type": "outpatient_visit",
+    "department": "Internal Medicine"
+  },
+  {
+    "note_id": "N004",
+    "note_text": "Patient Sarah Thompson, DOB 05/30/1990, MRN 667123. Productive cough x 5 days, fever 101.8F, shortness of breath on exertion. CXR: right lower lobe consolidation. Sputum culture pending. Assessment: Community-acquired pneumonia (ICD-10: J18.9). Medications: Azithromycin 500mg PO daily x 5 days, Guaifenesin 600mg PO BID, Albuterol MDI 2 puffs Q4H PRN. Admit for IV antibiotics if not improving in 48 hours. Address: 456 Oak Avenue, Springfield OH 45501.",
+    "note_type": "emergency_note",
+    "department": "Emergency Medicine"
+  },
+  {
+    "note_id": "N005",
+    "note_text": "Patient David Williams, DOB 09/14/1985, MRN 891234. PHQ-9 score 18 (severe). Reports anhedonia, insomnia, difficulty concentrating, passive suicidal ideation without plan. Assessment: Major depressive disorder, severe (ICD-10: F32.2). Started: Sertraline 50mg PO daily (titrate to 100mg in 2 weeks), Referral to outpatient psychiatry. Safety plan discussed. Emergency contact: Emily Williams, 555-678-9012.",
+    "note_type": "psychiatry_note",
+    "department": "Psychiatry"
+  },
+  {
+    "note_id": "N006",
+    "note_text": "Patient Linda Martinez, DOB 02/18/1968, MRN 223456. Chronic low back pain rated 7/10 on VAS. MRI shows L4-L5 disc herniation with moderate nerve root compression. Physical therapy x 12 weeks without adequate relief. Assessment: Lumbar disc herniation with radiculopathy (ICD-10: M51.16). Medications: Gabapentin 300mg PO TID, Cyclobenzaprine 10mg PO QHS PRN, Naproxen 500mg PO BID with food. Referral to pain management. DOB confirmed 02/18/1968.",
+    "note_type": "outpatient_visit",
+    "department": "Orthopedics"
+  },
+  {
+    "note_id": "N007",
+    "note_text": "Patient James O'Brien, DOB 12/01/1945, MRN 778899. Annual wellness exam. Colonoscopy due, last done 2018. BMI 31.2. Lipid panel: LDL 148, HDL 38, TG 212. Creatinine 1.4. Assessment: Mixed hyperlipidemia (ICD-10: E78.2), Overweight (ICD-10: E66.09), Chronic kidney disease stage 2 (ICD-10: N18.2). Medications: Rosuvastatin 20mg PO QHS, Fenofibrate 145mg PO daily. Lifestyle modification counseling provided. Phone: 513-555-0147.",
+    "note_type": "preventive_visit",
+    "department": "Primary Care"
+  },
+  {
+    "note_id": "N008",
+    "note_text": "Patient Angela Brown, DOB 06/09/1982, MRN 445567. MRN 445567. Asthma exacerbation triggered by upper respiratory infection. Peak flow 52% of personal best. Wheezing bilaterally on auscultation. Assessment: Acute exacerbation of asthma, moderate (ICD-10: J45.41). Treatment: Albuterol 2.5mg nebulized x3, Ipratropium 0.5mg nebulized x1, Methylprednisolone 125mg IV. Discharge on: Prednisone 40mg PO daily x 5 days, Fluticasone/Salmeterol 250/50 mcg 1 puff BID. Email: abrown@healthmail.com.",
+    "note_type": "emergency_note",
+    "department": "Emergency Medicine"
+  },
+  {
+    "note_id": "N009",
+    "note_text": "Patient Thomas Lee, DOB 04/27/1972, MRN 556789. Post-op day 2 following laparoscopic appendectomy. Incision sites clean, bowel sounds present, tolerating clear liquids. WBC trending down from 16.2 to 11.4. Assessment: Recovery from acute appendicitis (ICD-10: K37), Post-procedural status (ICD-10: Z96.89). Medications: Cefazolin 1g IV Q8H, Ketorolac 30mg IV Q6H, Ondansetron 4mg IV PRN nausea. Plan to discharge tomorrow if tolerating regular diet. Address: 789 Pine Road, Cincinnati OH 45201.",
+    "note_type": "progress_note",
+    "department": "Surgery"
+  },
+  {
+    "note_id": "N010",
+    "note_text": "Patient Nancy Wilson, DOB 08/03/1960, MRN 334455. Diagnosed with rheumatoid arthritis 8 years ago. Currently on biologic therapy. DAS28 score 4.2 (moderate disease activity). CRP 2.8, RF positive, anti-CCP positive. Assessment: Rheumatoid arthritis, moderate activity (ICD-10: M05.79). Medications: Adalimumab 40mg subcutaneous Q2 weeks, Methotrexate 15mg PO weekly, Folic acid 1mg PO daily. Monitoring: CBC, CMP, LFTs every 3 months. Next appointment in 3 months. Contact: nancy.wilson1960@email.com, 614-555-0388.",
+    "note_type": "rheumatology_note",
+    "department": "Rheumatology"
+  }
+]

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinical Note LLMOps — HIPAA-Compliant NLP Pipeline</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <div class="logo-icon">&#9877;</div>
+      <div class="logo-text">
+        <span class="logo-title">ClinicalNote LLMOps</span>
+        <span class="logo-subtitle">HIPAA-Compliant NLP Pipeline</span>
+      </div>
+    </a>
+    <div class="header-badge">
+      <span class="status-dot"></span>
+      MOCK MODE ACTIVE
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="intro" aria-labelledby="hero-heading">
+    <h1 id="hero-heading">ICD-10 &amp; Medication Extraction<br /><span>with Mandatory PII Scrubbing</span></h1>
+    <p>Clinical notes are de-identified before any LLM call. Zero raw PHI transmitted externally.</p>
+    <div class="pill-row" role="list" aria-label="Key technologies">
+      <span class="pill" role="listitem">Presidio PII Scrubbing</span>
+      <span class="pill" role="listitem">spaCy NER</span>
+      <span class="pill" role="listitem">ICD-10 Extraction</span>
+      <span class="pill" role="listitem">FHIR R4 Output</span>
+      <span class="pill" role="listitem">Human-in-the-Loop</span>
+    </div>
+  </section>
+
+  <!-- Pipeline Steps Banner -->
+  <nav class="pipeline-banner" aria-label="Pipeline stages">
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-label">PII Scrub</div>
+        <div class="step-sublabel">Presidio</div>
+      </div>
+    </div>
+    <span class="step-arrow" aria-hidden="true">&#8594;</span>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-label">NER Extraction</div>
+        <div class="step-sublabel">spaCy + LLM</div>
+      </div>
+    </div>
+    <span class="step-arrow" aria-hidden="true">&#8594;</span>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-label">Confidence Score</div>
+        <div class="step-sublabel">HIGH/MED/LOW</div>
+      </div>
+    </div>
+    <span class="step-arrow" aria-hidden="true">&#8594;</span>
+    <div class="pipeline-step">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-label">FHIR Mapping</div>
+        <div class="step-sublabel">R4 Bundle</div>
+      </div>
+    </div>
+    <span class="step-arrow" aria-hidden="true">&#8594;</span>
+    <div class="pipeline-step">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-label">Review Queue</div>
+        <div class="step-sublabel">Human-in-Loop</div>
+      </div>
+    </div>
+    <span class="step-arrow" aria-hidden="true">&#8594;</span>
+    <div class="pipeline-step">
+      <div class="step-num">6</div>
+      <div>
+        <div class="step-label">Audit Log</div>
+        <div class="step-sublabel">SQLite + S3</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Alert Area -->
+  <div id="alertArea"></div>
+
+  <!-- Processor Grid -->
+  <div class="processor-grid">
+
+    <!-- INPUT CARD -->
+    <section class="card" aria-labelledby="input-card-title">
+      <div class="card-header">
+        <span class="card-header-icon" aria-hidden="true">&#128196;</span>
+        <div>
+          <div class="card-header-title" id="input-card-title">Clinical Note Input</div>
+          <div class="card-header-sub">Raw text — PII scrubbed automatically before processing</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="noteId">Note ID</label>
+            <input type="text" id="noteId" value="N001" placeholder="e.g. N001" />
+          </div>
+          <div class="form-group">
+            <label for="noteType">Note Type</label>
+            <select id="noteType">
+              <option value="discharge_summary">Discharge Summary</option>
+              <option value="outpatient_visit">Outpatient Visit</option>
+              <option value="emergency_note">Emergency Note</option>
+              <option value="progress_note">Progress Note</option>
+              <option value="psychiatry_note">Psychiatry Note</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="noteText">Clinical Note Text</label>
+          <textarea
+            id="noteText"
+            placeholder="Paste a clinical note here. Names, DOB, MRN, SSN, phone, and email will be scrubbed before any LLM call..."
+            aria-describedby="noteTextHint"
+          >Patient John Smith, DOB 03/15/1965, MRN 789234. Chief complaint: chest pain radiating to left arm for 2 hours. Vital signs: BP 158/94, HR 102, O2 sat 96%. EKG shows ST-elevation. Assessment: Acute myocardial infarction (ICD-10: I21.9). Medications: Aspirin 325mg PO stat, Metoprolol 25mg PO BID, Atorvastatin 40mg PO QHS. Follow-up with cardiology in 1 week. Contact: 555-234-8901.</textarea>
+          <p id="noteTextHint" style="font-size:0.75rem;color:var(--color-muted);margin-top:0.25rem;">
+            All PHI is removed locally before any external API call.
+          </p>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <button class="btn btn-sample" onclick="loadSampleNote(0)">Sample: MI</button>
+          <button class="btn btn-sample" onclick="loadSampleNote(1)">Sample: Diabetes</button>
+          <button class="btn btn-sample" onclick="loadSampleNote(2)">Sample: HTN</button>
+          <button class="btn btn-sample" onclick="loadSampleNote(4)">Sample: Depression</button>
+        </div>
+
+        <button class="btn btn-primary" id="processBtn" onclick="processNote()">
+          <span id="btnIcon">&#9658;</span>
+          <span id="btnLabel">Process Note</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- OUTPUT CARD -->
+    <section class="card" aria-labelledby="output-card-title">
+      <div class="card-header">
+        <span class="card-header-icon" aria-hidden="true">&#9989;</span>
+        <div>
+          <div class="card-header-title" id="output-card-title">Pipeline Output</div>
+          <div class="card-header-sub">Scrubbed text, extracted entities, confidence scores</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- Placeholder -->
+        <div id="resultsPlaceholder" style="text-align:center;padding:3rem 1rem;color:var(--color-muted);">
+          <div style="font-size:3rem;margin-bottom:1rem;">&#128203;</div>
+          <p style="font-weight:600;color:var(--color-navy);margin-bottom:0.5rem;">Ready to process</p>
+          <p style="font-size:0.875rem;">Enter or paste a clinical note and click <strong>Process Note</strong>.</p>
+        </div>
+
+        <!-- Results -->
+        <div class="results-panel" id="resultsPanel">
+
+          <!-- PHI Strip -->
+          <div class="phi-strip">
+            <div class="phi-count-num" id="phiCount">0</div>
+            <div>
+              <div class="phi-strip-label">PHI instances removed</div>
+              <div style="font-size:0.75rem;color:var(--color-teal);margin-top:2px;" id="phiTypes"></div>
+            </div>
+          </div>
+
+          <!-- Scrubbed Text -->
+          <div class="result-section">
+            <div class="result-section-title">&#128274; Scrubbed Text (sent to LLM)</div>
+            <div class="scrubbed-text" id="scrubbedText"></div>
+          </div>
+
+          <!-- ICD Codes -->
+          <div class="result-section">
+            <div class="result-section-title">&#127973; ICD-10 Codes</div>
+            <div class="entity-list" id="icdList"></div>
+          </div>
+
+          <!-- Medications -->
+          <div class="result-section">
+            <div class="result-section-title">&#128138; Medications</div>
+            <div class="entity-list" id="medList"></div>
+          </div>
+
+          <!-- Review Queue Alert -->
+          <div id="reviewAlert"></div>
+
+          <!-- FHIR Bundle -->
+          <div class="result-section">
+            <div class="result-section-title">&#128230; FHIR R4 Bundle</div>
+            <div class="fhir-viewer" id="fhirViewer"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    ClinicalNote LLMOps &mdash; Masters Research Project, University of Dayton &middot; 2025 &nbsp;|&nbsp;
+    <a href="/docs">API Docs</a> &nbsp;|&nbsp;
+    HIPAA-compliant: zero raw PHI transmitted externally
+  </p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
