@@ -47,11 +47,22 @@ except ImportError:  # pragma: no cover
 @dataclass
 class ScrubResult:
     scrubbed_text: str
+    # SECURITY NOTE: original_text stores raw PHI for internal diagnostics only.
+    # It MUST NOT be logged, serialised to a response body, or persisted anywhere.
+    # Callers should access only scrubbed_text for downstream processing.
     original_text: str
     entities_found: list[dict]
     phi_count: int
     scrubbing_mode: str          # "presidio" | "regex"
     phi_types: dict[str, int]    # entity_type → count
+
+    def clear_original(self) -> None:
+        """
+        Overwrite original_text in-place after the scrubbing step is complete.
+        Call this as soon as you no longer need the raw text to minimise the
+        window during which PHI lives in Python heap memory.
+        """
+        object.__setattr__(self, "original_text", "")
 
 
 # ---------------------------------------------------------------------------
@@ -211,6 +222,20 @@ def create_scrubber() -> PresidioScrubber | RegexScrubber:
             return PresidioScrubber()
         except Exception as exc:  # pragma: no cover
             logger.warning("Presidio init failed (%s); falling back to regex scrubber.", exc)
+    # HIPAA COMPLIANCE RISK: regex-only mode does not detect PERSON (patient names),
+    # geographic subdivisions smaller than state, or device identifiers.
+    # This fallback is acceptable for development but MUST NOT be used in production
+    # without additional controls.  Set REQUIRE_PRESIDIO=true to fail hard instead.
+    if os.getenv("REQUIRE_PRESIDIO", "false").lower() in ("true", "1", "yes"):
+        raise RuntimeError(
+            "REQUIRE_PRESIDIO=true but Presidio is unavailable. "
+            "Cannot proceed: regex-only scrubbing does not cover all 18 HIPAA identifiers."
+        )
+    logger.warning(
+        "HIPAA RISK: Running regex-only PII scrubbing. "
+        "Patient names, geographic subdivisions, and device identifiers are NOT detected. "
+        "Install presidio-analyzer and presidio-anonymizer for full HIPAA coverage."
+    )
     return RegexScrubber()
 
 

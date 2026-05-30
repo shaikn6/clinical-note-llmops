@@ -11,6 +11,17 @@ services:
       - MOCK_S3=true
       - DATABASE_URL=sqlite:///./clinical_llmops.db
       - S3_AUDIT_BUCKET=hipaa-audit-logs
+      # SECURITY: Set API_KEY to a random string of >=32 chars before deploying.
+      # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
+      # In production, inject via a secrets manager — never commit the value.
+      - API_KEY=${API_KEY:-CHANGE_ME_generate_a_32_char_secret_before_deploying}
+      # SECURITY: Restrict CORS to trusted origins only.
+      # In production set this to the actual frontend origin, e.g.:
+      #   ALLOWED_ORIGINS=https://your-app.example.com
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8501}
+      # SECURITY: Enforce Presidio in production — set to "true" to refuse startup
+      # if Presidio is unavailable and regex-only fallback would be used.
+      - REQUIRE_PRESIDIO=${REQUIRE_PRESIDIO:-false}
       # Uncomment for live OpenAI:
       # - MOCK_MODE=false
       # - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -34,6 +45,8 @@ services:
       - MOCK_MODE=true
       - MOCK_S3=true
       - DATABASE_URL=sqlite:///./clinical_llmops.db
+      # Dashboard calls the API — it needs the same key to pass through
+      - API_KEY=${API_KEY:-CHANGE_ME_generate_a_32_char_secret_before_deploying}
     volumes:
       - ./data:/app/data:ro
       - db_data:/app

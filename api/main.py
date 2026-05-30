@@ -10,6 +10,10 @@ Endpoints:
   GET  /api/fhir/{note_id}       Retrieve the FHIR Bundle for a processed note
   GET  /health                   Health check
   GET  /                         Serve HTML frontend
+
+SECURITY: All PHI-processing endpoints require a valid API key supplied via the
+X-API-Key header.  Set API_KEY env var (min 32 chars) before starting.
+CORS is restricted to explicitly trusted origins via ALLOWED_ORIGINS env var.
 """
 
 from __future__ import annotations
@@ -17,15 +21,19 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.security.api_key import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 from pipeline.pii_scrubber import scrub_note
 from pipeline.entity_extractor import extract_entities
@@ -45,8 +53,72 @@ from pipeline.audit_logger import init_audit_db, log_operation, get_audit_log
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Security configuration
+# ---------------------------------------------------------------------------
+
+# API key: must be set in the environment.  Min 32 chars enforced at startup.
+_API_KEY: str = os.getenv("API_KEY", "")
+
+def _validate_api_key_at_startup() -> None:
+    if not _API_KEY or len(_API_KEY) < 32:
+        logger.warning(
+            "API_KEY env var is not set or is shorter than 32 characters. "
+            "All /api/* endpoints will reject requests until a valid key is configured."
+        )
+
+_validate_api_key_at_startup()
+
+API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def require_api_key(api_key: str | None = Security(API_KEY_HEADER)) -> str:
+    """
+    FastAPI dependency: reject requests that do not present the correct API key.
+    Uses constant-time comparison to prevent timing attacks.
+    """
+    if not _API_KEY or len(_API_KEY) < 32:
+        raise HTTPException(
+            status_code=503,
+            detail="Service unavailable: API key not configured on server.",
+        )
+    if not api_key or not secrets.compare_digest(api_key, _API_KEY):
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized: valid X-API-Key header required.",
+        )
+    return api_key
+
+
+# ---------------------------------------------------------------------------
+# CORS: restrict to explicitly configured trusted origins only
+# ---------------------------------------------------------------------------
+
+# Comma-separated list of allowed origins.  Defaults to localhost for dev.
+# Override in production: ALLOWED_ORIGINS=https://your-app.example.com
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8501")
+ALLOWED_ORIGINS: list[str] = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 # In-memory FHIR cache (note_id → bundle dict)
 FHIR_CACHE: dict[str, dict] = {}
+
+# ---------------------------------------------------------------------------
+# Security headers middleware
+# ---------------------------------------------------------------------------
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add HIPAA/OWASP-recommended security headers to every response."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response: Response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
 
 # ---------------------------------------------------------------------------
 # App lifecycle
@@ -66,16 +138,20 @@ app = FastAPI(
         "HIPAA-compliant LLMOps pipeline: PII scrubbing → ICD-10/medication extraction "
         "→ FHIR R4 output → S3 audit trail. Human-in-the-loop review queue."
     ),
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
+# Security headers on all responses
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS: locked to trusted origins only — never wildcard in a PHI-handling service
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
 # Serve frontend static files if the directory exists
@@ -117,7 +193,9 @@ class ProcessNoteResponse(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "version": "1.0.0", "mock_mode": os.getenv("MOCK_MODE", "true")}
+    # Health endpoint is intentionally unauthenticated (load-balancer probes).
+    # It does NOT reveal configuration details that could aid attackers.
+    return {"status": "healthy", "version": "1.1.0"}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -128,7 +206,7 @@ async def serve_frontend():
     return HTMLResponse("<h1>Clinical Note LLMOps API</h1><p>See <a href='/docs'>API docs</a>.</p>")
 
 
-@app.post("/api/process-note", response_model=ProcessNoteResponse)
+@app.post("/api/process-note", response_model=ProcessNoteResponse, dependencies=[Depends(require_api_key)])
 async def process_note(request: ProcessNoteRequest):
     """
     Full pipeline:
@@ -138,13 +216,18 @@ async def process_note(request: ProcessNoteRequest):
     4. Map to FHIR R4 Bundle
     5. Enqueue low-confidence entities for human review
     6. Log operation to audit trail (SQLite + S3)
+
+    Requires: X-API-Key header with valid API key.
     """
     note_id = request.note_id
-    logger.info("Processing note %s", note_id)
+    # SECURITY: log note_id only — NEVER log raw note_text which contains PHI
+    logger.info("Processing note id=%s user=%s", note_id, request.user_id)
 
     # Step 1: PII scrubbing — MUST happen before any LLM call
     try:
         scrub_result = scrub_note(request.note_text)
+        # SECURITY: clear raw PHI from the result object immediately after
+        # audit logging is complete.  original_text is never passed downstream.
         log_operation(
             note_id=note_id,
             operation="pii_scrubbing",
@@ -153,9 +236,15 @@ async def process_note(request: ProcessNoteRequest):
             phi_count=scrub_result.phi_count,
             status="success",
         )
+        scrub_result.clear_original()
     except Exception as exc:
-        log_operation(note_id=note_id, operation="pii_scrubbing", status="error", error_message=str(exc))
-        raise HTTPException(status_code=500, detail=f"PII scrubbing failed: {exc}")
+        # SECURITY: log the error internally but return a generic message to
+        # the caller — exception strings from the scrubber may echo fragments
+        # of the input text, which could contain PHI.
+        logger.error("PII scrubbing error for note_id=%s: %s", note_id, exc)
+        log_operation(note_id=note_id, operation="pii_scrubbing", status="error",
+                      error_message=type(exc).__name__)
+        raise HTTPException(status_code=500, detail="PII scrubbing failed. Check server logs.")
 
     # Step 2: Entity extraction (scrubbed text only!)
     try:
@@ -169,8 +258,10 @@ async def process_note(request: ProcessNoteRequest):
             status="success",
         )
     except Exception as exc:
-        log_operation(note_id=note_id, operation="entity_extraction", status="error", error_message=str(exc))
-        raise HTTPException(status_code=500, detail=f"Entity extraction failed: {exc}")
+        logger.error("Entity extraction error for note_id=%s: %s", note_id, exc)
+        log_operation(note_id=note_id, operation="entity_extraction", status="error",
+                      error_message=type(exc).__name__)
+        raise HTTPException(status_code=500, detail="Entity extraction failed. Check server logs.")
 
     # Step 3: Confidence scoring
     scoring = score_extractions(extraction)
@@ -224,7 +315,7 @@ async def process_note(request: ProcessNoteRequest):
     )
 
 
-@app.get("/api/review-queue")
+@app.get("/api/review-queue", dependencies=[Depends(require_api_key)])
 async def list_review_queue(
     status_filter: Optional[str] = Query(None, alias="status"),
     limit: int = Query(100, le=500),
@@ -234,7 +325,7 @@ async def list_review_queue(
     return {"items": get_all_items(limit=limit), "stats": queue_stats()}
 
 
-@app.post("/api/review-queue/{item_id}/approve")
+@app.post("/api/review-queue/{item_id}/approve", dependencies=[Depends(require_api_key)])
 async def approve_review_item(item_id: int, reviewer_id: str = "clinician"):
     success = approve_item(item_id, reviewer_id=reviewer_id)
     if not success:
@@ -248,7 +339,7 @@ async def approve_review_item(item_id: int, reviewer_id: str = "clinician"):
     return {"success": True, "item_id": item_id, "new_status": "approved"}
 
 
-@app.post("/api/review-queue/{item_id}/reject")
+@app.post("/api/review-queue/{item_id}/reject", dependencies=[Depends(require_api_key)])
 async def reject_review_item(item_id: int, reviewer_id: str = "clinician"):
     success = reject_item(item_id, reviewer_id=reviewer_id)
     if not success:
@@ -262,7 +353,7 @@ async def reject_review_item(item_id: int, reviewer_id: str = "clinician"):
     return {"success": True, "item_id": item_id, "new_status": "rejected"}
 
 
-@app.get("/api/audit-log")
+@app.get("/api/audit-log", dependencies=[Depends(require_api_key)])
 async def list_audit_log(
     note_id: Optional[str] = None,
     limit: int = Query(100, le=500),
@@ -271,7 +362,7 @@ async def list_audit_log(
     return {"entries": entries, "total": len(entries)}
 
 
-@app.get("/api/fhir/{note_id}")
+@app.get("/api/fhir/{note_id}", dependencies=[Depends(require_api_key)])
 async def get_fhir_bundle(note_id: str):
     bundle = FHIR_CACHE.get(note_id)
     if bundle is None:
@@ -282,7 +373,7 @@ async def get_fhir_bundle(note_id: str):
     return JSONResponse(content=bundle)
 
 
-@app.get("/api/sample-notes")
+@app.get("/api/sample-notes", dependencies=[Depends(require_api_key)])
 async def list_sample_notes():
     """Return the sample notes for testing."""
     notes_path = Path(__file__).parent.parent / "data" / "sample_notes.json"

@@ -16,7 +16,7 @@ env/
 *.sqlite
 *.sqlite3
 
-# Environment
+# Environment — never commit real secrets
 .env
 .env.*
 !.env.example
