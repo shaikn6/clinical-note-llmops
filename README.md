@@ -1,9 +1,13 @@
-> **This repository is private.** Source code available on request for verified employers and collaborators.
-> Contact: shaikn6@udayton.edu
 
 ---
 
 # clinical-note-llmops
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22c55e)
+![Tests](https://img.shields.io/badge/Tests-passing-22c55e)
+![Stack](https://img.shields.io/badge/Stack-spaCy-6366f1)
+
 
 **HIPAA-compliant LLMOps pipeline for clinical note processing.**
 ICD-10 and medication extraction with mandatory PII scrubbing, FHIR R4 output, human-in-the-loop review queue, and S3 audit trail.
@@ -11,6 +15,16 @@ ICD-10 and medication extraction with mandatory PII scrubbing, FHIR R4 output, h
 ![Pipeline Flow](docs/screenshots/pipeline_flow.png)
 
 ---
+
+## Quick Start
+
+```bash
+git clone https://github.com/shaikn6/clinical-note-llmops.git
+cd clinical-note-llmops
+pip install -r requirements.txt
+pytest tests/                    # run test suite
+streamlit run dashboard/app_v2.py    # launch dashboard
+```
 
 ## STAR Method
 
