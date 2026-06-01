@@ -77,7 +77,9 @@ ENTITY_LABELS: dict[str, str] = {
     "PHONE_NUMBER":        "[CONTACT_INFO]",
     "EMAIL_ADDRESS":       "[CONTACT_INFO]",
     "LOCATION":            "[ADDRESS]",
-    "US_DRIVER_LICENSE":   "[IDENTIFIER]",
+    # US_DRIVER_LICENSE intentionally excluded: Presidio misidentifies ICD-10 alpha
+    # prefixes (e.g. "I21") as driver license numbers, producing false positives that
+    # destroy clinical codes.  Real driver license formats are uncommon in clinical notes.
     "US_ITIN":             "[IDENTIFIER]",
     "NRP":                 "[IDENTIFIER]",
     "MEDICAL_LICENSE":     "[MEDICAL_RECORD_NUMBER]",
@@ -120,8 +122,15 @@ class PresidioScrubber:
         self._anonymizer = AnonymizerEngine()
 
     def scrub(self, text: str) -> ScrubResult:
+        # Apply regex patterns FIRST so that:
+        #   - MRN / DOB / SSN digits are replaced with canonical placeholders before
+        #     Presidio can misclassify them (e.g. SSN → US_ITIN → [IDENTIFIER]).
+        #   - ICD-10 alpha prefixes (e.g. "I21") are no longer bare digits that
+        #     Presidio could mis-tag as US_DRIVER_LICENSE.
+        pre_scrubbed, regex_entities = _apply_regex_patterns(text)
+
         results: list[RecognizerResult] = self._analyzer.analyze(
-            text=text,
+            text=pre_scrubbed,
             language="en",
             entities=list(ENTITY_LABELS.keys()),
         )
@@ -132,13 +141,13 @@ class PresidioScrubber:
             operators[entity_type] = OperatorConfig("replace", {"new_value": label})
 
         anonymized = self._anonymizer.anonymize(
-            text=text,
+            text=pre_scrubbed,
             analyzer_results=results,
             operators=operators,
         )
         scrubbed = anonymized.text
 
-        # Apply custom regex patterns on top
+        # Collect Presidio entity records (offsets are relative to pre_scrubbed)
         entities_found: list[dict] = [
             {
                 "entity_type": r.entity_type,
@@ -150,7 +159,7 @@ class PresidioScrubber:
             for r in results
         ]
 
-        scrubbed, regex_entities = _apply_regex_patterns(scrubbed)
+        # Merge regex entities (collected before Presidio pass)
         entities_found.extend(regex_entities)
 
         phi_types: dict[str, int] = {}
