@@ -129,8 +129,21 @@ class PresidioScrubber:
         #     Presidio could mis-tag as US_DRIVER_LICENSE.
         pre_scrubbed, regex_entities = _apply_regex_patterns(text)
 
+        # Mask canonical placeholders so Presidio doesn't re-tag them as entities.
+        # e.g. "[DATE_OF_BIRTH]" would be mis-detected as PERSON by spaCy NER.
+        import re as _re
+        placeholder_map: dict[str, str] = {}
+        masked = pre_scrubbed
+
+        def _mask(m: "_re.Match[str]") -> str:
+            token = f"__PHI{len(placeholder_map)}__"
+            placeholder_map[token] = m.group(0)
+            return token
+
+        masked = _re.sub(r"\[[A-Z_]+\]", _mask, masked)
+
         results: list[RecognizerResult] = self._analyzer.analyze(
-            text=pre_scrubbed,
+            text=masked,
             language="en",
             entities=list(ENTITY_LABELS.keys()),
         )
@@ -141,11 +154,14 @@ class PresidioScrubber:
             operators[entity_type] = OperatorConfig("replace", {"new_value": label})
 
         anonymized = self._anonymizer.anonymize(
-            text=pre_scrubbed,
+            text=masked,
             analyzer_results=results,
             operators=operators,
         )
+        # Restore the canonical placeholders that were masked before Presidio
         scrubbed = anonymized.text
+        for token, original in placeholder_map.items():
+            scrubbed = scrubbed.replace(token, original)
 
         # Collect Presidio entity records (offsets are relative to pre_scrubbed)
         entities_found: list[dict] = [
