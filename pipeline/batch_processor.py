@@ -27,7 +27,6 @@ from __future__ import annotations
 import logging
 import random
 import time
-import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any
@@ -41,9 +40,9 @@ except ImportError:
     TQDM_AVAILABLE = False
     logger.warning("tqdm not installed; progress bar will be text-only.")
 
-from pipeline.pii_scrubber import scrub_note
-from pipeline.entity_extractor import extract_entities
-from fhir.fhir_r4_builder import build_full_bundle
+from pipeline.pii_scrubber import scrub_note  # noqa: E402
+from pipeline.entity_extractor import extract_entities  # noqa: E402
+from fhir.fhir_r4_builder import build_full_bundle  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Synthetic note generation
@@ -284,7 +283,7 @@ class BatchResult:
     def summary(self) -> str:
         lines = [
             "=" * 60,
-            f"  Batch Processing Summary",
+            "  Batch Processing Summary",
             "=" * 60,
             f"  Notes requested  : {self.n_requested:,}",
             f"  Succeeded        : {self.n_success:,}",

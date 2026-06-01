@@ -21,22 +21,19 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import pandas as pd  # noqa: E402
+import plotly.express as px  # noqa: E402
+import plotly.graph_objects as go  # noqa: E402
 
-from pipeline.pii_scrubber import scrub_note
-from pipeline.entity_extractor import extract_entities
-from pipeline.confidence_scorer import score_extractions
-from pipeline.fhir_mapper import validate_bundle
-from fhir.fhir_r4_builder import (
+from pipeline.pii_scrubber import scrub_note  # noqa: E402
+from pipeline.entity_extractor import extract_entities  # noqa: E402
+from fhir.fhir_r4_builder import (  # noqa: E402
     build_full_bundle,
     export_bundle_json,
-    validate_r4_bundle,
 )
-from pipeline.batch_processor import run_batch, generate_synthetic_note
-from deidentification.deid_benchmarker import run_benchmark, generate_report_pdf
-from audit.hipaa_audit_logger import HIPAAAuditLogger
+from pipeline.batch_processor import run_batch, generate_synthetic_note  # noqa: E402
+from deidentification.deid_benchmarker import run_benchmark, generate_report_pdf  # noqa: E402
+from audit.hipaa_audit_logger import HIPAAAuditLogger  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Page config

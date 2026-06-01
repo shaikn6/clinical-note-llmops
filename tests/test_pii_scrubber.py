@@ -12,8 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pytest
-from pipeline.pii_scrubber import scrub_note, ScrubResult, CUSTOM_PATTERNS, _apply_regex_patterns
+from pipeline.pii_scrubber import scrub_note, ScrubResult, _apply_regex_patterns
 
 
 # ---------------------------------------------------------------------------

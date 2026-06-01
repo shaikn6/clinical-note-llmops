@@ -24,14 +24,7 @@ from pipeline.entity_extractor import ICDCode, Medication
 logger = logging.getLogger(__name__)
 
 try:
-    from fhir.resources.bundle import Bundle, BundleEntry
-    from fhir.resources.condition import Condition
-    from fhir.resources.codeableconcept import CodeableConcept
-    from fhir.resources.coding import Coding
-    from fhir.resources.medicationstatement import MedicationStatement
-    from fhir.resources.dosage import Dosage
-    from fhir.resources.meta import Meta
-    from fhir.resources.reference import Reference
+    import fhir.resources  # noqa: F401
     FHIR_AVAILABLE = True
 except ImportError:
     FHIR_AVAILABLE = False

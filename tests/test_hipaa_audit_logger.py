@@ -21,8 +21,6 @@ import pytest
 from audit.hipaa_audit_logger import (
     HIPAAAuditLogger,
     AuditEntry,
-    VALID_ACTIONS,
-    VALID_OUTCOMES,
     _redact_details,
 )
 

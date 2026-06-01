@@ -23,7 +23,6 @@ from deidentification.deid_benchmarker import (
     TypeMetrics,
     PIISpan,
     _was_scrubbed,
-    _build_annotated_note,
 )
 
 

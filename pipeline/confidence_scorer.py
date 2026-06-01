@@ -12,10 +12,9 @@ The scorer also produces a note-level quality summary.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Union
+from dataclasses import dataclass
 
-from pipeline.entity_extractor import ExtractionResult, ICDCode, Medication
+from pipeline.entity_extractor import ExtractionResult
 
 logger = logging.getLogger(__name__)
 

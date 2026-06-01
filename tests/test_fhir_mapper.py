@@ -13,7 +13,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pytest
 from pipeline.fhir_mapper import (
     map_to_fhir,
     bundle_to_json,

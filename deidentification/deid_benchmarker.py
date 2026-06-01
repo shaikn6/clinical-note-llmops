@@ -33,8 +33,6 @@ Usage::
 from __future__ import annotations
 
 import logging
-import re
-import uuid
 from dataclasses import dataclass, field
 from typing import NamedTuple
 
@@ -44,13 +42,12 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    import matplotlib.patches as mpatches
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
     logger.warning("matplotlib not available; PDF report generation disabled.")
 
-from pipeline.pii_scrubber import scrub_note
+from pipeline.pii_scrubber import scrub_note  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

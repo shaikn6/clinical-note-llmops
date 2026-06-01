@@ -22,24 +22,22 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import pandas as pd  # noqa: E402
+import plotly.express as px  # noqa: E402
 
-from pipeline.pii_scrubber import scrub_note
-from pipeline.entity_extractor import extract_entities
-from pipeline.confidence_scorer import score_extractions
-from pipeline.fhir_mapper import map_to_fhir, bundle_to_json, validate_bundle
-from pipeline.review_queue import (
+from pipeline.pii_scrubber import scrub_note  # noqa: E402
+from pipeline.entity_extractor import extract_entities  # noqa: E402
+from pipeline.confidence_scorer import score_extractions  # noqa: E402
+from pipeline.fhir_mapper import map_to_fhir, bundle_to_json, validate_bundle  # noqa: E402
+from pipeline.review_queue import (  # noqa: E402
     init_db,
     populate_review_queue,
     get_all_items,
-    get_pending_items,
     approve_item,
     reject_item,
     queue_stats,
 )
-from pipeline.audit_logger import init_audit_db, log_operation, get_audit_log
+from pipeline.audit_logger import init_audit_db, log_operation, get_audit_log  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Page config

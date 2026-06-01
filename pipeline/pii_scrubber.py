@@ -18,9 +18,10 @@ Entities detected:
   - Custom MRN pattern → [MEDICAL_RECORD_NUMBER]
 """
 
+import os
 import re
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 logger = logging.getLogger(__name__)

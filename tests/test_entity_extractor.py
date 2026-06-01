@@ -14,7 +14,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import os
-import pytest
 
 os.environ.setdefault("MOCK_MODE", "true")
 
@@ -26,7 +25,6 @@ from pipeline.entity_extractor import (
     _extract_medications_regex,
     _mock_llm_extract,
     _confidence_label,
-    KNOWN_DRUGS,
 )
 
 

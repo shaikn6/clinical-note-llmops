@@ -11,20 +11,18 @@ Produces:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import matplotlib
+import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import matplotlib.patheffects as pe
-import numpy as np
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.patches as mpatches  # noqa: E402
+import numpy as np  # noqa: E402
 
 SCREENSHOTS_DIR = ROOT / "docs" / "screenshots"
 SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -100,7 +98,7 @@ def generate_pipeline_flow():
                 color=TEAL_L)
 
         if i < n - 1:
-            mid_x = (xs[i] + xs[i + 1]) / 2
+            _mid_x = (xs[i] + xs[i + 1]) / 2
             ax.annotate(
                 "", xy=(xs[i + 1] - box_w / 2 - 0.005, y_box),
                 xytext=(xs[i] + box_w / 2 + 0.005, y_box),
@@ -267,7 +265,7 @@ def generate_dashboard_preview():
     tabs = ["⚙ Process Note", "🔍 Review Queue", "📊 Metrics", "📦 FHIR Explorer", "📋 Audit Log"]
     for i, tab in enumerate(tabs):
         color = TEAL_L if i == 2 else WHITE
-        bg    = TEAL    if i == 2 else "transparent"
+        _bg   = TEAL    if i == 2 else "transparent"
         x = 0.02 + i * 0.19
         if i == 2:
             rect = mpatches.FancyBboxPatch((x - 0.005, 0.1), 0.17, 0.8,
